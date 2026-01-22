@@ -1,0 +1,56 @@
+# Build output
+bin/
+obj/
+**/bin/
+**/obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio cache files
+.vs/
+.vscode/
+
+# Rider IDE
+.idea/
+
+# NuGet
+*.nupkg
+packages/
+.nuget/
+*.snupkg
+
+# ASP.NET Core / dotnet
+*.db
+*.log
+*.lock.json
+*.dll
+*.exe
+*.pdb
+*.mdb
+
+# Publish output
+publish/
+out/
+
+# Environment files
+.env
+.env.local
+appsettings.json
+
+# Resharper
+_ReSharper*/
+*.ReSharper*
+
+# Mac OS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Rider
+.idea/
