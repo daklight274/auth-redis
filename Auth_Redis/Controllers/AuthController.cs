@@ -45,5 +45,12 @@ namespace Auth_Redis.Controllers
 
             return Ok(new { message = "Logout thành công" });
         }
+        [HttpPost("verify-email")]
+        public async Task<IActionResult> VerifyEmail([FromQuery] string username, [FromQuery] string code)
+        {
+            var result = await _authService.VerifyEmailAsync(username, code);
+            if (!result) return BadRequest("Xác thực email thất bại");
+            return Ok("Xác thực email thành công");
+        }
     }
 }

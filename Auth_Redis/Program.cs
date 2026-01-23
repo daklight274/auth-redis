@@ -1,4 +1,6 @@
 ﻿using Auth_Redis.Autofac;
+using Auth_Redis.Entities.Settings;
+using Auth_Redis.Helpers;
 using Auth_Redis.Repositories;
 using Auth_Redis.Repositories.Interfaces;
 using Auth_Redis.Services;
@@ -84,7 +86,7 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     }
     return ConnectionMultiplexer.Connect(redisConnectionString);
 });
-
+builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("SmtpSettings"));
 // JWT Auth
 builder.Services.AddAuthentication("Bearer")
     .AddJwtBearer("Bearer", options =>

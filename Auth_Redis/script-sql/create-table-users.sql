@@ -1,0 +1,9 @@
+CREATE TABLE Users(
+	Id VARCHAR(50) Primary key,
+	UserName VARCHAR(50) UNIQUE NOT NULL,
+	[PassWord] VARCHAR(MAX) NOT NULL,
+	Email VARCHAR(100) NOT NULL,
+	IsEmailComfirmed BIT
+)
+
+

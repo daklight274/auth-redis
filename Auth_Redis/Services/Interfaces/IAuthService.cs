@@ -9,5 +9,6 @@ namespace Auth_Redis.Services.Interfaces
         Task<string> RegisterAsync(RegisterRequest request);
         Task<TokenRespone> RefreshTokenAsync(string refreshToken);
         Task RevokeRefreshTokenAsync(string refreshToken);
+        Task<bool> VerifyEmailAsync(string username, string code);
     }
 }
