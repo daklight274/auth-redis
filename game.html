@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NKN MARKET — Game Accounts & Items</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #030712;
+  --bg2:       #0a0f1e;
+  --bg3:       #0d1526;
+  --cyan:      #00e5ff;
+  --purple:    #b535f6;
+  --orange:    #ff6b35;
+  --green:     #00ff88;
+  --text:      #e2e8f0;
+  --muted:     #64748b;
+  --border:    rgba(0,229,255,0.12);
+  --glow-c:    0 0 20px rgba(0,229,255,0.4);
+  --glow-p:    0 0 20px rgba(181,53,246,0.4);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 16px;
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* ── CUSTOM CURSOR ─────────────────────────────── */
+#cursor { position:fixed; width:10px; height:10px; background:var(--cyan); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%,-50%); transition:transform .1s; mix-blend-mode:difference; }
+#cursor-ring { position:fixed; width:36px; height:36px; border:1px solid var(--cyan); border-radius:50%; pointer-events:none; z-index:9998; transform:translate(-50%,-50%); transition:transform .15s, width .2s, height .2s, opacity .2s; opacity:0.5; }
+
+/* ── SCANLINE OVERLAY ──────────────────────────── */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background:repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px);
+  pointer-events:none; z-index:1000;
+}
+
+/* ── CANVAS PARTICLES ──────────────────────────── */
+#particles { position:fixed; inset:0; z-index:0; opacity:.5; pointer-events:none; }
+
+/* ── NAV ───────────────────────────────────────── */
+nav {
+  position: fixed; top:0; left:0; right:0; z-index:500;
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 0 40px;
+  height: 64px;
+  background: rgba(3,7,18,0.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family:'Orbitron',monospace;
+  font-size:18px; font-weight:900;
+  letter-spacing:3px;
+  background: linear-gradient(90deg, var(--cyan), var(--purple));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  text-decoration:none;
+}
+
+.nav-links { display:flex; gap:32px; align-items:center; }
+.nav-links a {
+  font-family:'Rajdhani'; font-size:14px; font-weight:600;
+  letter-spacing:2px; text-transform:uppercase;
+  color:var(--muted); text-decoration:none;
+  position:relative; transition:color .2s;
+}
+.nav-links a::after {
+  content:''; position:absolute; bottom:-4px; left:0; right:0; height:1px;
+  background:var(--cyan); transform:scaleX(0); transition:transform .2s;
+}
+.nav-links a:hover { color:var(--cyan); }
+.nav-links a:hover::after { transform:scaleX(1); }
+
+.nav-actions { display:flex; align-items:center; gap:16px; }
+
+.btn-cart {
+  position:relative; background:none; border:1px solid var(--border);
+  padding:8px 16px; color:var(--text); font-family:'Rajdhani';
+  font-size:13px; font-weight:600; letter-spacing:1px;
+  cursor:none; transition:all .2s; border-radius:2px;
+  display:flex; align-items:center; gap:8px;
+}
+.btn-cart:hover { border-color:var(--cyan); color:var(--cyan); box-shadow:var(--glow-c); }
+.cart-badge {
+  position:absolute; top:-6px; right:-6px;
+  background:var(--orange); color:#fff; font-size:10px;
+  width:18px; height:18px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Orbitron';
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  border:none; padding:10px 24px;
+  color:#030712; font-family:'Rajdhani'; font-size:13px;
+  font-weight:700; letter-spacing:2px; text-transform:uppercase;
+  cursor:none; border-radius:2px; transition:all .3s;
+}
+.btn-primary:hover { box-shadow: 0 0 30px rgba(0,229,255,.5), 0 0 60px rgba(181,53,246,.3); transform:translateY(-1px); }
+
+/* ── HERO ──────────────────────────────────────── */
+.hero {
+  position:relative; z-index:1;
+  min-height: 100vh;
+  display:flex; align-items:center;
+  padding: 100px 80px 60px;
+  overflow:hidden;
+}
+
+.hero-bg {
+  position:absolute; inset:0;
+  background: radial-gradient(ellipse 80% 60% at 70% 50%, rgba(181,53,246,.15) 0%, transparent 60%),
+              radial-gradient(ellipse 60% 80% at 20% 80%, rgba(0,229,255,.08) 0%, transparent 50%),
+              linear-gradient(180deg, #030712 0%, #0a0f1e 100%);
+}
+
+.hero-grid {
+  position:absolute; inset:0; opacity:.12;
+  background-image:
+    linear-gradient(rgba(0,229,255,.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,255,.4) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 80%);
+}
+
+.hero-content { position:relative; z-index:2; max-width:600px; }
+
+.hero-tag {
+  display:inline-flex; align-items:center; gap:8px;
+  border:1px solid rgba(0,229,255,.3); padding:6px 16px;
+  border-radius:2px; margin-bottom:24px;
+  font-family:'Share Tech Mono'; font-size:11px;
+  color:var(--cyan); letter-spacing:2px;
+  background: rgba(0,229,255,.05);
+}
+.hero-tag .dot { width:6px; height:6px; border-radius:50%; background:var(--green); animation:blink 1.5s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+.hero h1 {
+  font-family:'Orbitron'; font-size:clamp(36px,5vw,72px);
+  font-weight:900; line-height:1.05;
+  margin-bottom:8px;
+}
+.hero h1 span {
+  background: linear-gradient(135deg, var(--cyan) 0%, var(--purple) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  display:block;
+}
+
+.hero-sub {
+  font-size:18px; font-weight:300; color:var(--muted);
+  line-height:1.7; margin:20px 0 36px;
+  letter-spacing:.5px;
+}
+
+.hero-stats { display:flex; gap:40px; margin-top:48px; }
+.stat { text-align:left; }
+.stat-num {
+  font-family:'Orbitron'; font-size:28px; font-weight:700;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  display:block; line-height:1.1;
+}
+.stat-label { font-size:12px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:4px; }
+
+.hero-visual {
+  position:absolute; right:80px; top:50%; transform:translateY(-50%);
+  width:500px; height:500px; z-index:2;
+}
+
+.orb {
+  position:absolute; border-radius:50%; filter:blur(1px);
+  animation:float 6s ease-in-out infinite;
+}
+.orb-1 { width:400px; height:400px; top:50px; left:50px;
+  background: radial-gradient(circle at 40% 40%, rgba(181,53,246,.3), rgba(0,229,255,.1) 50%, transparent 70%);
+  border:1px solid rgba(181,53,246,.2); animation-delay:0s; }
+.orb-2 { width:300px; height:300px; top:100px; left:100px;
+  background: radial-gradient(circle at 60% 30%, rgba(0,229,255,.2), transparent 60%);
+  border:1px solid rgba(0,229,255,.15); animation-delay:-2s; }
+
+@keyframes float { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-20px) rotate(3deg)} }
+
+.card-float {
+  position:absolute;
+  background: rgba(10,15,30,.9);
+  border:1px solid var(--border);
+  border-radius:8px; padding:16px;
+  backdrop-filter:blur(12px);
+  animation:cardFloat 5s ease-in-out infinite;
+}
+.card-float-1 { width:180px; top:60px; left:60px; animation-delay:0s; }
+.card-float-2 { width:160px; bottom:80px; right:40px; animation-delay:-2.5s; }
+.card-float-3 { width:140px; top:200px; right:20px; animation-delay:-1.5s; }
+@keyframes cardFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+
+.cf-game { font-family:'Orbitron'; font-size:9px; color:var(--cyan); letter-spacing:2px; margin-bottom:8px; }
+.cf-title { font-size:13px; font-weight:600; margin-bottom:4px; }
+.cf-price { font-family:'Orbitron'; font-size:16px; color:var(--green); }
+.cf-badge { display:inline-block; background:rgba(255,107,53,.15); color:var(--orange); font-size:10px; padding:2px 8px; border-radius:2px; margin-top:8px; border:1px solid rgba(255,107,53,.3); }
+
+/* ── GAMES STRIP ───────────────────────────────── */
+.games-strip {
+  position:relative; z-index:1;
+  padding: 20px 80px;
+  display:flex; gap:16px; align-items:center;
+  border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  background: rgba(10,15,30,.6);
+  overflow:hidden;
+}
+.game-chip {
+  display:flex; align-items:center; gap:10px; padding:8px 20px;
+  border:1px solid var(--border); border-radius:2px;
+  cursor:none; white-space:nowrap; transition:all .2s;
+  font-size:14px; font-weight:600; letter-spacing:1px;
+  flex-shrink:0;
+}
+.game-chip:hover, .game-chip.active {
+  border-color:var(--cyan); color:var(--cyan);
+  background:rgba(0,229,255,.05); box-shadow:var(--glow-c);
+}
+.game-chip .icon { font-size:18px; }
+.strip-label { font-family:'Share Tech Mono'; font-size:11px; color:var(--muted); letter-spacing:2px; white-space:nowrap; }
+
+/* ── SECTION ───────────────────────────────────── */
+section { position:relative; z-index:1; padding:80px; }
+
+.section-header { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:40px; }
+.section-title {
+  font-family:'Orbitron'; font-size:clamp(20px,2.5vw,32px);
+  font-weight:700; letter-spacing:2px;
+}
+.section-title span { color:var(--cyan); }
+.section-sub { font-size:14px; color:var(--muted); letter-spacing:1px; margin-top:6px; }
+
+.section-line {
+  flex:1; height:1px; margin:0 32px 8px;
+  background:linear-gradient(90deg, var(--cyan), transparent);
+  opacity:.3;
+}
+
+/* ── FILTERS ───────────────────────────────────── */
+.filters { display:flex; gap:8px; margin-bottom:32px; flex-wrap:wrap; }
+.filter-btn {
+  padding:8px 20px; border:1px solid var(--border);
+  background:none; color:var(--muted); font-family:'Rajdhani';
+  font-size:13px; font-weight:600; letter-spacing:1.5px;
+  text-transform:uppercase; cursor:none; border-radius:2px;
+  transition:all .2s;
+}
+.filter-btn:hover, .filter-btn.active {
+  border-color:var(--purple); color:var(--purple);
+  background:rgba(181,53,246,.08); box-shadow:var(--glow-p);
+}
+
+/* ── PRODUCT GRID ──────────────────────────────── */
+.product-grid {
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap:20px;
+}
+
+.product-card {
+  position:relative; overflow:hidden;
+  background: var(--bg3);
+  border:1px solid var(--border); border-radius:4px;
+  cursor:none; transition:all .3s; group:true;
+}
+.product-card::before {
+  content:''; position:absolute; inset:0;
+  background: linear-gradient(135deg, rgba(0,229,255,.03), rgba(181,53,246,.03));
+  opacity:0; transition:opacity .3s;
+}
+.product-card:hover { transform:translateY(-4px); border-color:rgba(0,229,255,.3); box-shadow: 0 20px 40px rgba(0,0,0,.5), var(--glow-c); }
+.product-card:hover::before { opacity:1; }
+
+.card-img {
+  width:100%; aspect-ratio:16/9; overflow:hidden; position:relative;
+}
+.card-img-bg {
+  width:100%; height:100%; object-fit:cover;
+  transition:transform .4s; display:block;
+}
+.product-card:hover .card-img-bg { transform:scale(1.06); }
+
+.card-game-tag {
+  position:absolute; top:10px; left:10px;
+  background:rgba(3,7,18,.85); backdrop-filter:blur(8px);
+  border:1px solid var(--border); padding:4px 10px;
+  font-family:'Share Tech Mono'; font-size:10px;
+  color:var(--cyan); letter-spacing:1.5px; border-radius:2px;
+}
+.card-type-tag {
+  position:absolute; top:10px; right:10px;
+  padding:4px 10px; border-radius:2px;
+  font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+}
+.type-account { background:rgba(181,53,246,.2); color:var(--purple); border:1px solid rgba(181,53,246,.4); }
+.type-item    { background:rgba(0,229,255,.15); color:var(--cyan); border:1px solid rgba(0,229,255,.4); }
+.type-currency{ background:rgba(0,255,136,.15); color:var(--green); border:1px solid rgba(0,255,136,.4); }
+
+.card-body { padding:16px; }
+.card-title { font-size:15px; font-weight:600; letter-spacing:.5px; margin-bottom:8px; line-height:1.3; }
+.card-meta  { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+.meta-tag {
+  font-size:11px; padding:2px 8px; border-radius:2px;
+  background:rgba(255,255,255,.04); border:1px solid var(--border); color:var(--muted);
+  font-family:'Share Tech Mono';
+}
+.card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:14px; }
+.card-price {
+  font-family:'Orbitron'; font-size:18px; font-weight:700;
+  color:var(--green); letter-spacing:1px;
+}
+.card-price-sub { font-family:'Rajdhani'; font-size:11px; color:var(--muted); letter-spacing:1px; }
+
+.btn-buy {
+  padding:8px 18px; background:none;
+  border:1px solid var(--cyan); color:var(--cyan);
+  font-family:'Rajdhani'; font-size:12px; font-weight:700;
+  letter-spacing:1.5px; text-transform:uppercase;
+  cursor:none; border-radius:2px; transition:all .2s;
+}
+.btn-buy:hover { background:var(--cyan); color:#030712; box-shadow:var(--glow-c); }
+
+.card-sold-badge {
+  position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  background:rgba(3,7,18,.75); backdrop-filter:blur(4px);
+  font-family:'Orbitron'; font-size:14px; letter-spacing:3px; color:var(--muted);
+}
+
+.card-hot {
+  position:absolute; top:0; right:0;
+  background: linear-gradient(135deg, var(--orange), #ff3366);
+  font-family:'Orbitron'; font-size:9px; font-weight:700;
+  padding:4px 10px; letter-spacing:2px; color:#fff;
+  border-bottom-left-radius:4px;
+}
+
+/* ── DEALS BANNER ──────────────────────────────── */
+.deals-banner {
+  margin:0 80px 80px;
+  position:relative; z-index:1; overflow:hidden;
+  border:1px solid rgba(255,107,53,.3); border-radius:4px;
+  padding:48px 60px;
+  background: linear-gradient(135deg, rgba(255,107,53,.08), rgba(181,53,246,.08));
+}
+.deals-banner::before {
+  content:''; position:absolute; inset:0;
+  background: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,107,53,.02) 10px, rgba(255,107,53,.02) 20px);
+}
+.deal-header { position:relative; display:flex; align-items:center; justify-content:space-between; }
+.deal-title { font-family:'Orbitron'; font-size:28px; font-weight:900; }
+.deal-title span { color:var(--orange); }
+.countdown { display:flex; gap:16px; align-items:center; }
+.time-block { text-align:center; }
+.time-num { font-family:'Orbitron'; font-size:36px; font-weight:900; color:var(--orange); display:block; line-height:1; }
+.time-label { font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+.time-sep { font-family:'Orbitron'; font-size:28px; color:var(--orange); opacity:.5; margin-bottom:12px; }
+
+.deal-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:32px; position:relative; }
+.deal-item {
+  background:rgba(10,15,30,.8); border:1px solid rgba(255,107,53,.2);
+  border-radius:4px; padding:20px; display:flex; align-items:center; gap:16px;
+  cursor:none; transition:all .2s;
+}
+.deal-item:hover { border-color:var(--orange); box-shadow: 0 0 20px rgba(255,107,53,.2); transform:translateY(-2px); }
+.deal-icon { font-size:36px; flex-shrink:0; }
+.deal-name { font-size:14px; font-weight:600; margin-bottom:4px; }
+.deal-prices { display:flex; align-items:center; gap:10px; }
+.deal-old { font-size:12px; color:var(--muted); text-decoration:line-through; font-family:'Share Tech Mono'; }
+.deal-new { font-family:'Orbitron'; font-size:18px; font-weight:700; color:var(--orange); }
+.deal-save { font-size:10px; background:rgba(255,107,53,.2); color:var(--orange); padding:2px 6px; border-radius:2px; border:1px solid rgba(255,107,53,.4); }
+
+/* ── MARQUEE ───────────────────────────────────── */
+.marquee-wrap { border-top:1px solid var(--border); border-bottom:1px solid var(--border); overflow:hidden; background:rgba(0,229,255,.03); }
+.marquee-track { display:flex; gap:64px; padding:14px 0; animation:marquee 25s linear infinite; width:max-content; }
+.marquee-item { display:flex; align-items:center; gap:10px; font-family:'Share Tech Mono'; font-size:12px; color:var(--muted); letter-spacing:1px; white-space:nowrap; flex-shrink:0; }
+.marquee-item .dot { color:var(--cyan); }
+@keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+/* ── TRUST SECTION ─────────────────────────────── */
+.trust { background:var(--bg2); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+.trust-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--border); }
+.trust-item {
+  background:var(--bg2); padding:40px 32px; text-align:center;
+  transition:background .2s; cursor:default;
+}
+.trust-item:hover { background:var(--bg3); }
+.trust-icon { font-size:32px; margin-bottom:16px; display:block; }
+.trust-title { font-family:'Orbitron'; font-size:14px; font-weight:700; letter-spacing:1px; margin-bottom:8px; color:var(--cyan); }
+.trust-desc  { font-size:13px; color:var(--muted); line-height:1.6; }
+
+/* ── FOOTER ────────────────────────────────────── */
+footer {
+  padding:60px 80px 40px;
+  background:var(--bg2); border-top:1px solid var(--border);
+  position:relative; z-index:1;
+}
+.footer-top { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:60px; margin-bottom:48px; }
+.footer-logo {
+  font-family:'Orbitron'; font-size:20px; font-weight:900; letter-spacing:3px;
+  background:linear-gradient(90deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  margin-bottom:16px;
+}
+.footer-desc { font-size:13px; color:var(--muted); line-height:1.7; max-width:280px; }
+.footer-heading { font-family:'Orbitron'; font-size:11px; letter-spacing:2px; color:var(--cyan); margin-bottom:16px; }
+.footer-links { list-style:none; }
+.footer-links li { margin-bottom:10px; }
+.footer-links a { font-size:13px; color:var(--muted); text-decoration:none; transition:color .2s; letter-spacing:.5px; }
+.footer-links a:hover { color:var(--text); }
+.footer-bottom { display:flex; align-items:center; justify-content:space-between; padding-top:24px; border-top:1px solid var(--border); }
+.footer-copy { font-size:12px; color:var(--muted); font-family:'Share Tech Mono'; letter-spacing:1px; }
+.footer-social { display:flex; gap:12px; }
+.social-btn {
+  width:32px; height:32px; border:1px solid var(--border); border-radius:2px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; cursor:none; transition:all .2s; color:var(--muted);
+  text-decoration:none;
+}
+.social-btn:hover { border-color:var(--cyan); color:var(--cyan); box-shadow:var(--glow-c); }
+
+/* ── CART SIDEBAR ──────────────────────────────── */
+.cart-overlay { position:fixed; inset:0; background:rgba(3,7,18,.8); z-index:600; opacity:0; pointer-events:none; transition:opacity .3s; backdrop-filter:blur(4px); }
+.cart-overlay.open { opacity:1; pointer-events:all; }
+.cart-sidebar {
+  position:fixed; top:0; right:0; bottom:0; width:380px;
+  background:var(--bg3); border-left:1px solid var(--border);
+  z-index:700; display:flex; flex-direction:column;
+  transform:translateX(100%); transition:transform .4s cubic-bezier(.4,0,.2,1);
+}
+.cart-sidebar.open { transform:translateX(0); }
+.cart-head { padding:24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.cart-head h3 { font-family:'Orbitron'; font-size:14px; letter-spacing:2px; color:var(--cyan); }
+.cart-close { background:none; border:1px solid var(--border); color:var(--muted); width:32px; height:32px; border-radius:2px; cursor:none; transition:all .2s; font-size:16px; }
+.cart-close:hover { border-color:var(--orange); color:var(--orange); }
+.cart-items { flex:1; overflow-y:auto; padding:16px; }
+.cart-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:16px; color:var(--muted); font-family:'Share Tech Mono'; font-size:13px; letter-spacing:1px; }
+.cart-empty-icon { font-size:48px; opacity:.3; }
+.cart-item { display:flex; gap:12px; padding:12px; border:1px solid var(--border); border-radius:4px; margin-bottom:10px; }
+.ci-img { width:64px; height:44px; border-radius:2px; object-fit:cover; flex-shrink:0; }
+.ci-info { flex:1; min-width:0; }
+.ci-name { font-size:13px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:2px; }
+.ci-game { font-size:11px; color:var(--muted); font-family:'Share Tech Mono'; }
+.ci-price { font-family:'Orbitron'; font-size:14px; color:var(--green); margin-top:4px; }
+.ci-remove { background:none; border:none; color:var(--muted); cursor:none; padding:4px; font-size:16px; transition:color .2s; flex-shrink:0; }
+.ci-remove:hover { color:var(--orange); }
+.cart-foot { padding:20px; border-top:1px solid var(--border); }
+.cart-total { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.cart-total-label { font-family:'Share Tech Mono'; font-size:12px; color:var(--muted); letter-spacing:2px; }
+.cart-total-num { font-family:'Orbitron'; font-size:22px; font-weight:700; color:var(--green); }
+.btn-checkout { width:100%; padding:14px; background:linear-gradient(135deg,var(--cyan),var(--purple)); border:none; color:#030712; font-family:'Orbitron'; font-size:13px; font-weight:700; letter-spacing:2px; cursor:none; border-radius:2px; transition:all .3s; }
+.btn-checkout:hover { box-shadow:0 0 30px rgba(0,229,255,.4); transform:translateY(-1px); }
+
+/* ── NOTIFICATION TOAST ────────────────────────── */
+.toast { position:fixed; bottom:32px; right:32px; z-index:800; display:flex; align-items:center; gap:12px; padding:14px 20px; background:var(--bg3); border:1px solid var(--green); border-radius:4px; box-shadow:0 0 20px rgba(0,255,136,.2); transform:translateY(20px); opacity:0; transition:all .3s; pointer-events:none; max-width:320px; }
+.toast.show { transform:translateY(0); opacity:1; }
+.toast-icon { font-size:20px; flex-shrink:0; }
+.toast-text { font-size:13px; font-weight:600; color:var(--green); }
+
+/* ── SCROLLBAR ─────────────────────────────────── */
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:rgba(0,229,255,.2); border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:rgba(0,229,255,.4); }
+
+/* ── LOAD ANIMATION ────────────────────────────── */
+.fade-up { opacity:0; transform:translateY(30px); transition:opacity .6s ease, transform .6s ease; }
+.fade-up.visible { opacity:1; transform:translateY(0); }
+
+@media(max-width:1200px) {
+  .hero { padding:100px 40px 60px; }
+  .hero-visual { right:40px; width:380px; height:380px; }
+  section, .deals-banner { padding:60px 40px; }
+  .deals-banner { margin:0 40px 60px; }
+  .footer-top { grid-template-columns:1fr 1fr; gap:40px; }
+  nav { padding:0 24px; }
+  .games-strip { padding:20px 40px; }
+}
+@media(max-width:900px) {
+  .hero-visual { display:none; }
+  .hero { padding:120px 40px 60px; }
+  .deal-grid { grid-template-columns:1fr; }
+  .trust-grid { grid-template-columns:1fr 1fr; }
+  .footer-top { grid-template-columns:1fr; }
+  .nav-links { display:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- CURSOR -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- PARTICLES CANVAS -->
+<canvas id="particles"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">NKN</a>
+  <div class="nav-links">
+    <a href="#shop">Shop</a>
+    <a href="#deals">Deals</a>
+    <a href="#shop">Accounts</a>
+    <a href="#shop">Items</a>
+  </div>
+  <div class="nav-actions">
+    <button class="btn-cart" onclick="toggleCart()">
+      <span>⚡</span> CART
+      <span class="cart-badge" id="cartBadge">0</span>
+    </button>
+    <button class="btn-primary" onclick="toggleCart()">SIGN IN</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-tag"><span class="dot"></span> MARKETPLACE ONLINE</div>
+    <h1>TRADE GAME<span>ACCOUNTS</span>& ITEMS</h1>
+    <p class="hero-sub">The most trusted marketplace for premium game accounts, rare items, and in-game currency. Instant delivery. Guaranteed.</p>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;">
+      <button class="btn-primary" onclick="document.getElementById('shop').scrollIntoView({behavior:'smooth'})">BROWSE SHOP</button>
+      <button class="btn-cart" style="font-size:13px;padding:10px 24px;" onclick="document.getElementById('deals').scrollIntoView({behavior:'smooth'})">🔥 HOT DEALS</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><span class="stat-num" id="cnt-listings">12,847</span><span class="stat-label">Listings</span></div>
+      <div class="stat"><span class="stat-num" id="cnt-sellers">3,200+</span><span class="stat-label">Sellers</span></div>
+      <div class="stat"><span class="stat-num" id="cnt-orders">98,500+</span><span class="stat-label">Orders</span></div>
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="card-float card-float-1">
+      <div class="cf-game">LEAGUE OF LEGENDS</div>
+      <div class="cf-title">Challenger Account</div>
+      <div class="cf-price">$89.99</div>
+      <span class="cf-badge">200+ Champs</span>
+    </div>
+    <div class="card-float card-float-2">
+      <div class="cf-game">GENSHIN IMPACT</div>
+      <div class="cf-title">AR55 • Hu Tao</div>
+      <div class="cf-price">$149.00</div>
+      <span class="cf-badge">5★ WEAPON</span>
+    </div>
+    <div class="card-float card-float-3">
+      <div class="cf-game">PUBG MOBILE</div>
+      <div class="cf-title">Season 28 Set</div>
+      <div class="cf-price">$34.99</div>
+    </div>
+  </div>
+</div>
+
+<!-- GAMES STRIP -->
+<div class="games-strip">
+  <span class="strip-label">BROWSE BY GAME</span>
+  <div class="game-chip active" onclick="filterGame(this,'all')"><span class="icon">🎮</span>All Games</div>
+  <div class="game-chip" onclick="filterGame(this,'lol')"><span class="icon">⚔️</span>League of Legends</div>
+  <div class="game-chip" onclick="filterGame(this,'pubg')"><span class="icon">🔫</span>PUBG Mobile</div>
+  <div class="game-chip" onclick="filterGame(this,'genshin')"><span class="icon">🌊</span>Genshin Impact</div>
+  <div class="game-chip" onclick="filterGame(this,'valorant')"><span class="icon">🎯</span>Valorant</div>
+  <div class="game-chip" onclick="filterGame(this,'wow')"><span class="icon">⚡</span>World of Warcraft</div>
+  <div class="game-chip" onclick="filterGame(this,'ff')"><span class="icon">🔥</span>Free Fire</div>
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track" id="marqueeTrack"></div>
+</div>
+
+<!-- SHOP SECTION -->
+<section id="shop">
+  <div class="section-header fade-up">
+    <div>
+      <div class="section-title">FEATURED <span>LISTINGS</span></div>
+      <div class="section-sub">HAND-PICKED PREMIUM ACCOUNTS & ITEMS</div>
+    </div>
+    <div class="section-line"></div>
+  </div>
+  <div class="filters fade-up">
+    <button class="filter-btn active" onclick="filterType(this,'all')">ALL</button>
+    <button class="filter-btn" onclick="filterType(this,'account')">ACCOUNTS</button>
+    <button class="filter-btn" onclick="filterType(this,'item')">ITEMS</button>
+    <button class="filter-btn" onclick="filterType(this,'currency')">CURRENCY</button>
+    <button class="filter-btn" onclick="filterType(this,'boost')">BOOSTING</button>
+  </div>
+  <div class="product-grid" id="productGrid"></div>
+</section>
+
+<!-- DEALS BANNER -->
+<div class="deals-banner fade-up" id="deals">
+  <div class="deal-header">
+    <div>
+      <div style="font-family:'Share Tech Mono';font-size:11px;color:var(--orange);letter-spacing:3px;margin-bottom:8px;">⚡ LIMITED TIME</div>
+      <div class="deal-title">FLASH <span>DEALS</span></div>
+    </div>
+    <div class="countdown">
+      <div class="time-block"><span class="time-num" id="cH">00</span><span class="time-label">Hours</span></div>
+      <span class="time-sep">:</span>
+      <div class="time-block"><span class="time-num" id="cM">00</span><span class="time-label">Min</span></div>
+      <span class="time-sep">:</span>
+      <div class="time-block"><span class="time-num" id="cS">00</span><span class="time-label">Sec</span></div>
+    </div>
+  </div>
+  <div class="deal-grid" id="dealGrid"></div>
+</div>
+
+<!-- TRUST -->
+<div class="trust">
+  <div class="trust-grid">
+    <div class="trust-item">
+      <span class="trust-icon">🛡️</span>
+      <div class="trust-title">SECURE ESCROW</div>
+      <div class="trust-desc">Funds held safely until delivery is confirmed by the buyer.</div>
+    </div>
+    <div class="trust-item">
+      <span class="trust-icon">⚡</span>
+      <div class="trust-title">INSTANT DELIVERY</div>
+      <div class="trust-desc">Most orders delivered within minutes of payment confirmation.</div>
+    </div>
+    <div class="trust-item">
+      <span class="trust-icon">🔄</span>
+      <div class="trust-title">24H GUARANTEE</div>
+      <div class="trust-desc">Full refund if account doesn't match description within 24 hours.</div>
+    </div>
+    <div class="trust-item">
+      <span class="trust-icon">💬</span>
+      <div class="trust-title">24/7 SUPPORT</div>
+      <div class="trust-desc">Live chat support available around the clock for all issues.</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-logo">NEXUS MARKET</div>
+      <div class="footer-desc">The most trusted marketplace for game accounts, in-game items, and digital goods. Safe, fast, and reliable.</div>
+    </div>
+    <div>
+      <div class="footer-heading">MARKETPLACE</div>
+      <ul class="footer-links">
+        <li><a href="#">Browse All</a></li>
+        <li><a href="#">Top Sellers</a></li>
+        <li><a href="#">New Listings</a></li>
+        <li><a href="#">Flash Deals</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-heading">SUPPORT</div>
+      <ul class="footer-links">
+        <li><a href="#">Help Center</a></li>
+        <li><a href="#">Disputes</a></li>
+        <li><a href="#">Refund Policy</a></li>
+        <li><a href="#">Contact Us</a></li>
+      </ul>
+    </div>
+    <div>
+      <div class="footer-heading">COMPANY</div>
+      <ul class="footer-links">
+        <li><a href="#">About</a></li>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Become a Seller</a></li>
+        <li><a href="#">Affiliate</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 NKN MARKET — ALL RIGHTS RESERVED</div>
+    <div class="footer-social">
+      <a class="social-btn" href="#">𝕏</a>
+      <a class="social-btn" href="#">📘</a>
+      <a class="social-btn" href="#">💬</a>
+      <a class="social-btn" href="#">▶</a>
+    </div>
+  </div>
+</footer>
+
+<!-- CART SIDEBAR -->
+<div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+<div class="cart-sidebar" id="cartSidebar">
+  <div class="cart-head">
+    <h3>YOUR CART</h3>
+    <button class="cart-close" onclick="toggleCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot">
+    <div class="cart-total">
+      <span class="cart-total-label">TOTAL</span>
+      <span class="cart-total-num" id="cartTotal">$0.00</span>
+    </div>
+    <button class="btn-checkout" onclick="checkout()">CHECKOUT NOW</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✅</span>
+  <span class="toast-text" id="toastText">Added to cart!</span>
+</div>
+
+<script>
+// ── DATA ───────────────────────────────────────────────────
+const GAMES = {
+  lol:'League of Legends', pubg:'PUBG Mobile',
+  genshin:'Genshin Impact', valorant:'Valorant',
+  wow:'World of Warcraft', ff:'Free Fire'
+};
+const BG_COLORS = {
+  lol:'linear-gradient(135deg,#0a0f1e,#1a0a2e)',
+  pubg:'linear-gradient(135deg,#0f1a0a,#1a1a0a)',
+  genshin:'linear-gradient(135deg,#0a1520,#0a0f1e)',
+  valorant:'linear-gradient(135deg,#200a0a,#0a0f1e)',
+  wow:'linear-gradient(135deg,#15080a,#1a0a28)',
+  ff:'linear-gradient(135deg,#1a0a00,#0a0f1e)'
+};
+const EMOJIS = { lol:'⚔️', pubg:'🔫', genshin:'🌊', valorant:'🎯', wow:'⚡', ff:'🔥' };
+
+const PRODUCTS = [
+  { id:1, game:'lol', type:'account', title:'Challenger Smurf — 200 Champions', price:89.99, tags:['Challenger','200 Champs','Unranked'], hot:true, sold:false },
+  { id:2, game:'genshin', type:'account', title:'AR55 — Hu Tao + Yelan C1', price:149.00, tags:['AR55','Hu Tao','C1'], hot:true, sold:false },
+  { id:3, game:'pubg', type:'item', title:'Season 28 — Full Gun Set', price:34.99, tags:['Season 28','SCAR','AKM'], hot:false, sold:false },
+  { id:4, game:'valorant', type:'account', title:'Radiant Account — 20 Agents', price:74.99, tags:['Radiant','20 Agents','NA'], hot:false, sold:false },
+  { id:5, game:'lol', type:'currency', title:'RP Bundle — 13,000 RP Instant', price:79.99, tags:['13,000 RP','VN Server','Instant'], hot:false, sold:false },
+  { id:6, game:'genshin', type:'currency', title:'Primogems x6,480 — Genesis', price:99.00, tags:['6480 Gems','New Account','Asia'], hot:true, sold:false },
+  { id:7, game:'wow', type:'account', title:'Max Level — Full BIS Gear M+22', price:199.00, tags:['Level 80','M+22','BIS'], hot:false, sold:true },
+  { id:8, game:'ff', type:'account', title:'Grand Master — Rare Skins x60', price:59.99, tags:['Grand Master','60 Skins','SEA'], hot:false, sold:false },
+  { id:9, game:'valorant', type:'item', title:'Oni Phantom + Elderflame Set', price:45.00, tags:['Oni Phantom','Elderflame','NA'], hot:true, sold:false },
+  { id:10, game:'pubg', type:'account', title:'Conqueror Account — All Seasons', price:89.00, tags:['Conqueror','All Season','AS'], hot:false, sold:false },
+  { id:11, game:'lol', type:'account', title:'Diamond I — EUW Fresh Season', price:49.99, tags:['Diamond I','EUW','150 Champs'], hot:false, sold:false },
+  { id:12, game:'genshin', type:'item', title:'Homa Staff R5 — Full Refine', price:69.00, tags:['Staff of Homa','R5','Asia'], hot:false, sold:false },
+];
+
+const DEALS = [
+  { icon:'⚔️', name:'LOL Platinum Account', old:'$49.99', price:'$29.99', save:'40% OFF' },
+  { icon:'🌊', name:'Genshin 5★ Starter', old:'$89.00', price:'$55.00', save:'38% OFF' },
+  { icon:'🔫', name:'PUBG Full Skin Set', old:'$59.99', price:'$34.99', save:'42% OFF' },
+];
+
+const MARQUEE_ITEMS = [
+  '⚔️ NEW: Challenger LOL Account',
+  '🌊 Genshin AR55 Hu Tao Listed',
+  '🔥 FLASH DEAL: 40% OFF PUBG',
+  '🛡️ 98,500+ Orders Completed',
+  '⚡ Instant Delivery Available',
+  '💎 Valorant Radiant Unlocked',
+  '🎯 New: Oni Phantom Skin Set',
+  '🌟 Verified Sellers Only',
+];
+
+// ── STATE ──────────────────────────────────────────────────
+let cart = [];
+let activeGame = 'all';
+let activeType = 'all';
+
+// ── CURSOR ─────────────────────────────────────────────────
+const cur = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx=0, my=0, rx=0, ry=0;
+document.addEventListener('mousemove', e => { mx=e.clientX; my=e.clientY; cur.style.left=mx+'px'; cur.style.top=my+'px'; });
+function animRing() { rx+=(mx-rx)*.12; ry+=(my-ry)*.12; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(animRing); }
+animRing();
+document.querySelectorAll('button,a,.game-chip,.product-card,.deal-item,.trust-item').forEach(el => {
+  el.addEventListener('mouseenter', () => { ring.style.width='52px'; ring.style.height='52px'; ring.style.opacity='0.8'; });
+  el.addEventListener('mouseleave', () => { ring.style.width='36px'; ring.style.height='36px'; ring.style.opacity='0.5'; });
+});
+
+// ── PARTICLES ──────────────────────────────────────────────
+(function() {
+  const c = document.getElementById('particles');
+  const ctx = c.getContext('2d');
+  let W, H, pts = [];
+  function resize() { W=c.width=window.innerWidth; H=c.height=window.innerHeight; }
+  resize(); window.addEventListener('resize', resize);
+  for(let i=0;i<80;i++) pts.push({ x:Math.random()*window.innerWidth, y:Math.random()*window.innerHeight, vx:(Math.random()-.5)*.3, vy:(Math.random()-.5)*.3, r:Math.random()*1.5+.5 });
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p => {
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W) p.vx*=-1;
+      if(p.y<0||p.y>H) p.vy*=-1;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(0,229,255,0.4)'; ctx.fill();
+    });
+    pts.forEach((a,i) => pts.slice(i+1).forEach(b => {
+      const d=Math.hypot(a.x-b.x,a.y-b.y);
+      if(d<120) { ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+        ctx.strokeStyle=`rgba(0,229,255,${(1-d/120)*.15})`; ctx.stroke(); }
+    }));
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ── MARQUEE ─────────────────────────────────────────────────
+(function() {
+  const track = document.getElementById('marqueeTrack');
+  const doubled = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
+  doubled.forEach(t => {
+    const d = document.createElement('div');
+    d.className = 'marquee-item';
+    d.innerHTML = `${t} <span class="dot">◆</span>`;
+    track.appendChild(d);
+  });
+})();
+
+// ── PRODUCT CARDS ───────────────────────────────────────────
+function getGradient(game) { return BG_COLORS[game] || 'linear-gradient(135deg,#0a0f1e,#0d1526)'; }
+
+function renderProducts() {
+  const grid = document.getElementById('productGrid');
+  const filtered = PRODUCTS.filter(p => (activeGame==='all'||p.game===activeGame) && (activeType==='all'||p.type===activeType));
+  grid.innerHTML = filtered.map(p => `
+    <div class="product-card fade-up" data-id="${p.id}">
+      ${p.hot?'<div class="card-hot">🔥 HOT</div>':''}
+      <div class="card-img">
+        <div class="card-img-bg" style="background:${getGradient(p.game)};display:flex;align-items:center;justify-content:center;font-size:64px;">${EMOJIS[p.game]||'🎮'}</div>
+        <div class="card-game-tag">${GAMES[p.game]||p.game}</div>
+        <div class="card-type-tag type-${p.type}">${p.type.toUpperCase()}</div>
+      </div>
+      <div class="card-body">
+        <div class="card-title">${p.title}</div>
+        <div class="card-meta">${p.tags.map(t=>`<span class="meta-tag">${t}</span>`).join('')}</div>
+        <div class="card-footer">
+          <div><div class="card-price">$${p.price.toFixed(2)}</div><div class="card-price-sub">INSTANT DELIVERY</div></div>
+          <button class="btn-buy" onclick="addToCart(${p.id})" ${p.sold?'disabled':''}>BUY NOW</button>
+        </div>
+      </div>
+      ${p.sold?'<div class="card-sold-badge">SOLD OUT</div>':''}
+    </div>
+  `).join('');
+  observeFadeUp();
+}
+
+// ── DEALS ───────────────────────────────────────────────────
+(function() {
+  const g = document.getElementById('dealGrid');
+  g.innerHTML = DEALS.map(d => `
+    <div class="deal-item">
+      <span class="deal-icon">${d.icon}</span>
+      <div>
+        <div class="deal-name">${d.name}</div>
+        <div class="deal-prices">
+          <span class="deal-old">${d.old}</span>
+          <span class="deal-new">${d.price}</span>
+          <span class="deal-save">${d.save}</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+})();
+
+// ── COUNTDOWN ───────────────────────────────────────────────
+(function() {
+  let end = Date.now() + (11*3600 + 23*60 + 45) * 1000;
+  function tick() {
+    let d = Math.max(0, end - Date.now());
+    let h=Math.floor(d/3600000), m=Math.floor((d%3600000)/60000), s=Math.floor((d%60000)/1000);
+    document.getElementById('cH').textContent = String(h).padStart(2,'0');
+    document.getElementById('cM').textContent = String(m).padStart(2,'0');
+    document.getElementById('cS').textContent = String(s).padStart(2,'0');
+  }
+  tick(); setInterval(tick, 1000);
+})();
+
+// ── CART ────────────────────────────────────────────────────
+function addToCart(id) {
+  const p = PRODUCTS.find(x=>x.id===id);
+  if(!p||p.sold) return;
+  const ex = cart.find(x=>x.id===id);
+  if(!ex) cart.push({...p, qty:1});
+  updateCart();
+  showToast(`Added: ${p.title}`);
+}
+function removeFromCart(id) { cart = cart.filter(x=>x.id!==id); updateCart(); }
+function updateCart() {
+  const badge = document.getElementById('cartBadge');
+  badge.textContent = cart.reduce((a,x)=>a+x.qty,0);
+  badge.style.display = cart.length ? 'flex' : 'none';
+  const items = document.getElementById('cartItems');
+  const total = document.getElementById('cartTotal');
+  if(!cart.length) {
+    items.innerHTML = '<div class="cart-empty"><span class="cart-empty-icon">🛒</span><span>YOUR CART IS EMPTY</span></div>';
+    total.textContent = '$0.00';
+    return;
+  }
+  items.innerHTML = cart.map(p=>`
+    <div class="cart-item">
+      <div class="ci-img" style="background:${getGradient(p.game)};display:flex;align-items:center;justify-content:center;font-size:24px;">${EMOJIS[p.game]||'🎮'}</div>
+      <div class="ci-info">
+        <div class="ci-name">${p.title}</div>
+        <div class="ci-game">${GAMES[p.game]||p.game}</div>
+        <div class="ci-price">$${p.price.toFixed(2)}</div>
+      </div>
+      <button class="ci-remove" onclick="removeFromCart(${p.id})">✕</button>
+    </div>
+  `).join('');
+  total.textContent = '$' + cart.reduce((a,x)=>a+x.price*x.qty,0).toFixed(2);
+}
+function toggleCart() {
+  const s=document.getElementById('cartSidebar'), o=document.getElementById('cartOverlay');
+  s.classList.toggle('open'); o.classList.toggle('open');
+}
+function checkout() { showToast('Redirecting to checkout...'); setTimeout(()=>toggleCart(),600); }
+
+// ── FILTERS ─────────────────────────────────────────────────
+function filterGame(el, game) {
+  document.querySelectorAll('.game-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active'); activeGame=game; renderProducts();
+}
+function filterType(el, type) {
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active'); activeType=type; renderProducts();
+}
+
+// ── TOAST ────────────────────────────────────────────────────
+function showToast(msg) {
+  const t=document.getElementById('toast'), tx=document.getElementById('toastText');
+  tx.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+// ── INTERSECTION OBSERVER ────────────────────────────────────
+function observeFadeUp() {
+  const io = new IntersectionObserver(entries=>{
+    entries.forEach(e=>{ if(e.isIntersecting){e.target.classList.add('visible'); io.unobserve(e.target);} });
+  },{threshold:.1});
+  document.querySelectorAll('.fade-up').forEach((el,i)=>{ el.style.transitionDelay=(i*.07)+'s'; io.observe(el); });
+}
+
+// ── INIT ─────────────────────────────────────────────────────
+renderProducts();
+updateCart();
+observeFadeUp();
+document.getElementById('cartBadge').style.display='none';
+
+// Animate counter numbers
+function animCount(el, target, suffix='') {
+  let start=0, dur=2000, step=dur/60;
+  const timer = setInterval(()=>{
+    start += target/60;
+    if(start>=target){start=target;clearInterval(timer);}
+    el.textContent = Math.floor(start).toLocaleString()+suffix;
+  }, step);
+}
+const io2 = new IntersectionObserver(entries=>{
+  if(entries[0].isIntersecting){
+    animCount(document.getElementById('cnt-listings'),12847,'');
+    animCount(document.getElementById('cnt-sellers'),3200,'+');
+    animCount(document.getElementById('cnt-orders'),98500,'+');
+    io2.disconnect();
+  }
+},{threshold:.3});
+io2.observe(document.querySelector('.hero-stats'));
+</script>
+</body>
+</html>
